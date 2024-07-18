@@ -1,0 +1,4 @@
+bun*
+node_modules
+.secret
+wasm
