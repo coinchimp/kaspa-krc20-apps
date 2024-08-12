@@ -6,7 +6,7 @@ import { PrivateKey } from './wasm/kaspa'
 
 // Initialize BIP32 with the secp256k1 library
 const bip32 = BIP32Factory(ecc);
-const network = 'testnet-10'
+const network = 'mainnet'
 
 // Function to generate a 24-word mnemonic phrase
 async function generate24WordMnemonic(): Promise<string> {
