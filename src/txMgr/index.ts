@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events'
-import { sompiToKaspaStringWithSuffix, type IPaymentOutput, createTransactions, PrivateKey, UtxoProcessor, UtxoContext, type RpcClient } from "../../wasm/kaspa";
+import { sompiToKaspaStringWithSuffix, UtxoProcessor, UtxoContext, type RpcClient } from "../../wasm/kaspa";
 
 export default class trxManager extends EventEmitter {
   private network: string;

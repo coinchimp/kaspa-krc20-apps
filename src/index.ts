@@ -1,4 +1,4 @@
-import { RpcClient, Resolver, ICreateTransactions, Opcodes, PrivateKey, addressFromScriptPublicKey, createTransactions, kaspaToSompi, sompiToKaspaStringWithSuffix } from "../wasm/kaspa";
+import { RpcClient, Resolver, IGetBalanceByAddressRequest , PrivateKey, createTransactions, kaspaToSompi, sompiToKaspaStringWithSuffix } from "../wasm/kaspa";
 import minimist from 'minimist';
 import context from './txMgr';
 import trxManager from "./txMgr";
@@ -58,6 +58,11 @@ const publicKey = privateKey.toPublicKey();
 log(`Main: Determining wallet address`, 'DEBUG');
 const address = publicKey.toAddress(network);
 log(`Address: ${address.toString()}`, 'INFO');
+const balanceRequest: IGetBalanceByAddressRequest = {
+  address: address.toString(),
+};
+const balance = await RPC.getBalanceByAddress(balanceRequest)
+log(`****Balance: ${balance}`)
 
 const myTxMgr = new trxManager(network, address.toString(), RPC );
 
@@ -65,6 +70,7 @@ const myTxMgr = new trxManager(network, address.toString(), RPC );
 async function processTransaction(amount: string, destination: string) {
   try {
     const { entries } = await RPC.getUtxosByAddresses({ addresses: [address.toString()] });
+    console.log(entries)
     const { transactions } = await createTransactions({
       priorityEntries: [],
       entries,
@@ -94,10 +100,13 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
+let isWaitingForFinalBalance = false;
+
 // Function to prompt user for transaction details
 function promptForTransaction() {
   rl.question('Enter the amount to transfer (e.g., "13.333"): ', (amount) => {
     rl.question('Enter the destination wallet address: ', (destination) => {
+      isWaitingForFinalBalance = true;
       processTransaction(amount, destination);
     });
   });
@@ -106,7 +115,17 @@ function promptForTransaction() {
 // Listen for balance updates and prompt for transactions
 myTxMgr.on('balance', () => {
   log(`Updated balance: ${sompiToKaspaStringWithSuffix(BigInt(myTxMgr.context.balance?.mature?.toString() || "0"), network)}`, 'INFO');
-  promptForTransaction();
+  
+  // Only prompt for a new transaction if we're not waiting for the final balance
+  if (isWaitingForFinalBalance) {
+    setTimeout(() => {
+      // After a short delay, check if the balance has stabilized
+      if (!myTxMgr.context.balance?.pending) {
+        isWaitingForFinalBalance = false;
+        promptForTransaction();
+      }
+    }, 1000); // Adjust the delay as needed to allow for balance finalization
+  }
 });
 
 // Start the balance tracking and prompt the user for the first transaction

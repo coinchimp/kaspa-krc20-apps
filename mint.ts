@@ -1,4 +1,4 @@
-import { RpcClient, Resolver, ScriptBuilder, Opcodes, PrivateKey, addressFromScriptPublicKey, createTransactions, kaspaToSompi } from "./wasm/kaspa"
+import { RpcClient, Encoding , Resolver, ScriptBuilder, Opcodes, PrivateKey, addressFromScriptPublicKey, createTransactions, kaspaToSompi } from "./wasm/kaspa"
 import minimist from 'minimist';
 
 // Parse command-line arguments
@@ -19,9 +19,11 @@ if (!privateKeyArg) {
 log("Main: starting rpc connenction",'DEBUG')
 const RPC = new RpcClient({
   resolver: new Resolver(),
+  encoding: Encoding.Borsh,
   networkId: network
 });
 
+await RPC.disconnect()
 await RPC.connect()
 log("Main: RPC connection stablished",'DEBUG')
 
