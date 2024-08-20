@@ -1,117 +1,102 @@
-import { RpcClient, PrivateKey, createTransactions, PendingTransaction , kaspaToSompi, UtxoProcessor, UtxoContext, sompiToKaspaStringWithSuffix } from "../../wasm/kaspa";
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'events'
+import { kaspaToSompi, type IPaymentOutput, createTransactions, PrivateKey, UtxoProcessor, UtxoContext, type RpcClient } from "../../wasm/kaspa-dev";
 
-class TransactionSender extends EventEmitter {
-  private rpcClient: RpcClient;
+
+export default class TransactionSender extends EventEmitter {
+  private networkId: string;
   private privateKey: PrivateKey;
-  private amount: string;
-  private destination: string;
-  private network: string;
+  private address: string;
   private processor: UtxoProcessor;
-  private context: UtxoContext;  
+  private context: UtxoContext;
+  private rpc: RpcClient;
 
-  constructor(rpcClient: RpcClient, privateKey: PrivateKey, amount: string, destination: string, network: string = 'testnet-11') {
-    super();
-    this.privateKey = privateKey;
-    this.amount = amount;
-    this.destination = destination;
-    this.network = network;
-    this.processor = new UtxoProcessor({ rpc: rpcClient, networkId: network });
-    this.rpcClient = this.processor.rpc;
+
+
+  constructor(networkId: string, privKey: PrivateKey, rpc: RpcClient) {
+    super()
+    this.networkId = networkId;
+    this.privateKey = privKey;
+    this.address = this.privateKey.toAddress(networkId).toString();
+    this.processor = new UtxoProcessor({ rpc, networkId });
+    this.rpc = this.processor.rpc
     this.context = new UtxoContext({ processor: this.processor });
-    this.registerProcessor(privateKey);
+    this.registerProcessor()
   }
 
-  // Method to create and send the transaction
-  public async sendTransaction(): Promise<string> {
-    try {
-      // Get the address associated with the private key
-      const address = this.privateKey.toPublicKey().toAddress(this.network).toString();
+  async transferFunds(address, amount) {
+
+    console.log(`TrxManager: Crearting Transaction`)
+    let payments: IPaymentOutput[] = [{
+      address: address,
+      amount: kaspaToSompi(amount)!
+    }];
+
+    const transactionId = await this.send(payments);
+    console.log(`TrxManager: Sent payments. Transaction ID: ${transactionId}`);
+
+    return transactionId;
+
+  }
+
+  async send(outputs: IPaymentOutput[]) {
+    console.log(outputs);
+    console.log(`TrxManager: Context to be used: ${this.context}`);
+    
+    const { transactions, summary } = await createTransactions({
+      entries: this.context,
+      outputs,
+      changeAddress: this.address,
+      priorityFee: 0n
+    });
+    console.log(`TrxManager: Transaction Length: ${transactions.length}`)
+    // Handle the first transaction immediately
+    if (transactions.length > 0) {
+      const firstTransaction = transactions[0];
+      console.log(`TrxManager: Payment with transaction ID: ${firstTransaction.id} to be signed and submitted`);
       
-      // Fetch current balance
-      const initialBalanceSompi = BigInt(this.context.balance?.mature?.toString() || "0");
-      console.log(`Initial balance for address ${address}: ${sompiToKaspaStringWithSuffix(initialBalanceSompi, this.network)}`);
-
-      // Get UTXOs for the address
-      const { entries } = await this.rpcClient.getUtxosByAddresses({ addresses: [address] });
-      console.log(`UTXOs fetched for address ${address}:`, entries);
-
-      // Create the transaction
-      const { transactions } = await createTransactions({
-        priorityEntries: [],
-        entries,
-        outputs: [{
-          address: this.destination,
-          amount: kaspaToSompi(this.amount)!
-        }],
-        changeAddress: address,
-        priorityFee: kaspaToSompi('0')!,
-        networkId: this.network
+      firstTransaction.sign([this.privateKey]);
+      firstTransaction.submit(this.rpc);
+      await new Promise<void>((resolve) => {
+        this.once('maturity', () => {
+          console.log(`TrxManager: Payment with transaction ID: ${firstTransaction.id} submitted`);
+          resolve();
+        });
       });
-
-      // Sign and submit the transaction
-      let finalTransactionId: string = '';
-      for (const transaction of transactions) {
-        transaction.sign([this.privateKey], false);
-        console.log(`Transaction signed with ID: ${transaction.id}`);
-        await transaction.submit(this.rpcClient);
-        console.log(`Transaction submitted with ID: ${transaction.id}`);
-        finalTransactionId = transaction.id;
-      }
-
-      // Start balance tracking until it reaches the expected balance
-      this.trackBalanceChange(initialBalanceSompi,transactions[0]);
-
-      return finalTransactionId;
-    } catch (error) {
-      console.error(`Transaction error: ${error}`);
-      throw error;
     }
+  
+    // Handle the remaining transactions, waiting for the `time-to-submit` event
+    for (let i = 1; i < transactions.length; i++) {
+      const transaction = transactions[i];
+      console.log(`TrxManager: Payment with transaction ID: ${transaction.id} to be signed`);
+      transaction.sign([this.privateKey]);
+      transaction.submit(this.rpc);
+      await new Promise<void>((resolve) => {
+        this.once('maturity', () => {
+          console.log(`TrxManager: Payment with transaction ID: ${transaction.id} submitted`);
+          resolve();
+        });
+      });
+    }
+  
+    return summary.finalTransactionId;
   }
+  
 
-  private registerProcessor(privateKey: PrivateKey) {
-    const publicKey = privateKey.toPublicKey();
 
+  private registerProcessor () {
     this.processor.addEventListener("utxo-proc-start", async () => {
-      await this.context.clear();
-      await this.context.trackAddresses([publicKey.toAddress(this.network).toString()]);
-    });
+      console.log(`TrxManager: registerProcessor - this.context.clear()`);
+      await this.context.clear()
+      console.log(`TrxManager: registerProcessor - tracking pool address`);
+      await this.context.trackAddresses([ this.address ])
+    })
 
-    this.processor.addEventListener('balance', () => {
-      const currentBalance = BigInt(this.context.balance?.mature?.toString() || "0");
-      console.log("Balance event in processor:", sompiToKaspaStringWithSuffix(currentBalance, this.network));
-      this.emit('balance', currentBalance);
-    });
+    this.processor.addEventListener('maturity', () => {
+      //if (DEBUG) this.monitoring.debug(`TrxManager: maturity event`)
+      this.emit('maturity') 
+    })
 
-    this.processor.start();
-  }
+    this.processor.start()
+  }  
 
-  private trackBalanceChange(initialBalance: bigint, transaction: PendingTransaction) {
-    const estimatedBalance = initialBalance - kaspaToSompi(this.amount)! - transaction.feeAmount;
-  
-    this.on('balance', (currentBalance: bigint) => {
-      const lowerBound = estimatedBalance - (estimatedBalance / BigInt(100)); // 1% lower bound
-      const upperBound = estimatedBalance + (estimatedBalance / BigInt(100)); // 1% upper bound
-  
-      if (currentBalance >= lowerBound && currentBalance <= upperBound) {
-        console.log(`Balance updated to expected amount after transaction. Final balance: ${sompiToKaspaStringWithSuffix(currentBalance, this.network)}`);
-        this.removeAllListeners('balance'); // Stop tracking once the expected balance is reached
-      }
-    });
-  }
 }
-
-/*
-// Example usage
-(async () => {
-
-
-  const privateKey = new PrivateKey('your_private_key_here');
-  const amount = '13.333';
-  const destination = 'destination_address_here';
-
-  const transactionSender = new TransactionSender(rpcClient, privateKey, amount, destination);
-  const transactionId = await transactionSender.sendTransaction();
-  console.log(`Final Transaction ID: ${transactionId}`);
-})();
-*/

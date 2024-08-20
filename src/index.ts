@@ -1,132 +1,74 @@
-import { RpcClient, Resolver, IGetBalanceByAddressRequest , PrivateKey, createTransactions, kaspaToSompi, sompiToKaspaStringWithSuffix } from "../wasm/kaspa";
+import { RpcClient, Encoding , Resolver, PrivateKey } from "../wasm/kaspa-dev";
 import minimist from 'minimist';
-import context from './txMgr';
-import trxManager from "./txMgr";
-import readline from 'readline';
+import TransactionSender from './TransactionSender';
 
 // Parse command-line arguments
 const args = minimist(process.argv.slice(2));
 
 const privateKeyArg = args.privKey;
-const network = args.network || 'testnet-10';
+const destination = args.destination;
+const amount = String(args.amount);
+const network = args.network || 'testnet-11';
 const logLevel = args.logLevel || 'INFO';
-//let transactions: Promise<ICreateTransactions>;
 
 if (!privateKeyArg) {
   console.error("Please provide a private key using the --privKey flag.");
   process.exit(1);
 }
 
+if (!destination) {
+  console.error("Please provide a destination address using the --destination flag.");
+  process.exit(1);
+}
+
+if (!amount) {
+  console.error("Please provide an amount to send using the --amount flag.");
+  process.exit(1);
+}
+
+
+
+const log = (message: string, level: string = 'INFO') => {
+  if (logLevel === 'DEBUG' || level !== 'DEBUG') {
+    console.log(`[${level}] ${message}`);
+  }
+};
+
+log(`Main: amount is ${amount}`,'DEBUG')
+
 log("Main: starting RPC connection", 'DEBUG');
 const RPC = new RpcClient({
   resolver: new Resolver(),
+  encoding: Encoding.Borsh,
   networkId: network
 });
 
 await RPC.connect();
+
+const serverInfo = await RPC.getServerInfo();
+if (!serverInfo.isSynced || !serverInfo.hasUtxoIndex) {
+  throw Error('Provided node is either not synchronized or lacks the UTXO index.');
+}
+
 log("Main: RPC connection established", 'DEBUG');
-
-function log(message: string, level: string = 'INFO') {
-  const timestamp = new Date().toISOString();
-  if (level === 'ERROR') {
-    console.error(`[${timestamp}] [${level}] ${message}`);
-  } else if (logLevel === 'DEBUG' || level === 'INFO') {
-    console.log(`[${timestamp}] [${level}] ${message}`);
-  }
-}
-
-function printResolverUrls(rpcClient: RpcClient) {
-  const resolver = rpcClient.resolver;
-  if (resolver && resolver.urls) {
-    log("Resolver URLs:", 'DEBUG');
-    resolver.urls.forEach((url: string) => {
-      log(url, 'DEBUG');
-    });
-  } else {
-    log("No URLs found in the Resolver.", 'DEBUG');
-  }
-}
-
-if (logLevel === 'DEBUG') {
-  printResolverUrls(RPC);
-}
-
-log(`Main: Submitting private key`, 'DEBUG');
 const privateKey = new PrivateKey(privateKeyArg);
-log(`Main: Determining public key`, 'DEBUG');
-const publicKey = privateKey.toPublicKey();
-log(`Main: Determining wallet address`, 'DEBUG');
-const address = publicKey.toAddress(network);
-log(`Address: ${address.toString()}`, 'INFO');
-const balanceRequest: IGetBalanceByAddressRequest = {
-  address: address.toString(),
-};
-const balance = await RPC.getBalanceByAddress(balanceRequest)
-log(`****Balance: ${balance}`)
+log("Main: Private Key defined into privateKey", 'DEBUG');
 
-const myTxMgr = new trxManager(network, address.toString(), RPC );
 
-// Function to process transactions
-async function processTransaction(amount: string, destination: string) {
-  try {
-    const { entries } = await RPC.getUtxosByAddresses({ addresses: [address.toString()] });
-    console.log(entries)
-    const { transactions } = await createTransactions({
-      priorityEntries: [],
-      entries,
-      outputs: [{
-        address: destination,
-        amount: kaspaToSompi(amount)!
-      }],
-      changeAddress: address.toString(),
-      priorityFee: kaspaToSompi('0')!,
-      networkId: network
-    });
-    for (const transaction of transactions) {
-      transaction.sign([privateKey], false);
-      log(`Main: Transaction signed with ID: ${transaction.id}`, 'DEBUG');
-      await transaction.submit(RPC);
-      log(`Main: Transaction submitted with ID: ${transaction.id}`, 'DEBUG');
+try {
 
-    }
-  } catch (error) {
-    log(`Transaction error: ${error}`, 'ERROR');
-  }
+  log("Main: Creating a new transactionSender", 'DEBUG');
+  const transactionSender = new TransactionSender(network, privateKey, RPC);
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  log("Main: Transfering Funds", 'DEBUG');
+  const transactionId = transactionSender.transferFunds(privateKey.toPublicKey().toAddress(network).toString(), amount);
+
+  console.log(`Final Transaction ID: `, transactionId);
+} catch (error) {
+  console.error(`Error in main function: ${error.message}`);
 }
 
-// Create a readline interface for user input
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
+await new Promise(resolve => setTimeout(resolve, 5000));
+await RPC.disconnect(); 
+log("Main: RPC connection closed", 'DEBUG');
 
-let isWaitingForFinalBalance = false;
-
-// Function to prompt user for transaction details
-function promptForTransaction() {
-  rl.question('Enter the amount to transfer (e.g., "13.333"): ', (amount) => {
-    rl.question('Enter the destination wallet address: ', (destination) => {
-      isWaitingForFinalBalance = true;
-      processTransaction(amount, destination);
-    });
-  });
-}
-
-// Listen for balance updates and prompt for transactions
-myTxMgr.on('balance', () => {
-  log(`Updated balance: ${sompiToKaspaStringWithSuffix(BigInt(myTxMgr.context.balance?.mature?.toString() || "0"), network)}`, 'INFO');
-  
-  // Only prompt for a new transaction if we're not waiting for the final balance
-  if (isWaitingForFinalBalance) {
-    setTimeout(() => {
-      // After a short delay, check if the balance has stabilized
-      if (!myTxMgr.context.balance?.pending) {
-        isWaitingForFinalBalance = false;
-        promptForTransaction();
-      }
-    }, 1000); // Adjust the delay as needed to allow for balance finalization
-  }
-});
-
-// Start the balance tracking and prompt the user for the first transaction
-promptForTransaction();
