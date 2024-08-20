@@ -27,7 +27,7 @@ bun run generateKeys.ts
 
 Special thanks to: [KaffinPX](https://github.com/KaffinPX) to share this code in [Kaspa Discord Server](http://discord.gg/kaspa)
 
-
+To use the 
 ```bash
 bun run src/index.ts --privKey ${PRIVATE_KEY} --destination ${WALLET_ADDRESS} --amount "13.333" --network testnet-11 --logLevel DEBUG
 ```

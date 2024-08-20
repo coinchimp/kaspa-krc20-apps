@@ -23,7 +23,7 @@ export default class TransactionSender extends EventEmitter {
     this.registerProcessor()
   }
 
-  async transferFunds(address, amount) {
+  async transferFunds(address: string, amount: string) {
 
     console.log(`TrxManager: Crearting Transaction`)
     let payments: IPaymentOutput[] = [{
@@ -39,11 +39,13 @@ export default class TransactionSender extends EventEmitter {
   }
 
   async send(outputs: IPaymentOutput[]) {
+
+    let context = this.context
     console.log(outputs);
     console.log(`TrxManager: Context to be used: ${this.context}`);
     
     const { transactions, summary } = await createTransactions({
-      entries: this.context,
+      entries: context,
       outputs,
       changeAddress: this.address,
       priorityFee: 0n
@@ -55,13 +57,7 @@ export default class TransactionSender extends EventEmitter {
       console.log(`TrxManager: Payment with transaction ID: ${firstTransaction.id} to be signed and submitted`);
       
       firstTransaction.sign([this.privateKey]);
-      firstTransaction.submit(this.rpc);
-      await new Promise<void>((resolve) => {
-        this.once('maturity', () => {
-          console.log(`TrxManager: Payment with transaction ID: ${firstTransaction.id} submitted`);
-          resolve();
-        });
-      });
+      await firstTransaction.submit(this.rpc);
     }
   
     // Handle the remaining transactions, waiting for the `time-to-submit` event
@@ -69,13 +65,7 @@ export default class TransactionSender extends EventEmitter {
       const transaction = transactions[i];
       console.log(`TrxManager: Payment with transaction ID: ${transaction.id} to be signed`);
       transaction.sign([this.privateKey]);
-      transaction.submit(this.rpc);
-      await new Promise<void>((resolve) => {
-        this.once('maturity', () => {
-          console.log(`TrxManager: Payment with transaction ID: ${transaction.id} submitted`);
-          resolve();
-        });
-      });
+      await transaction.submit(this.rpc);
     }
   
     return summary.finalTransactionId;
@@ -90,12 +80,6 @@ export default class TransactionSender extends EventEmitter {
       console.log(`TrxManager: registerProcessor - tracking pool address`);
       await this.context.trackAddresses([ this.address ])
     })
-
-    this.processor.addEventListener('maturity', () => {
-      //if (DEBUG) this.monitoring.debug(`TrxManager: maturity event`)
-      this.emit('maturity') 
-    })
-
     this.processor.start()
   }  
 
