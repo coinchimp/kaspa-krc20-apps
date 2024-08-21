@@ -155,21 +155,28 @@ node kaspa-transfer --privKey yourPrivateKeyHere --destination kaspaAddressHere 
 
 This command will transfer 100 KASPA tokens from your wallet to the specified destination address on the `testnet-10` network, with detailed logging output at the `DEBUG` level.
 
-### Installation
 
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/yourusername/kaspa-transfer-cli.git
-    ```
-2. Navigate to the project directory:
-    ```bash
-    cd kaspa-transfer-cli
-    ```
-3. Install the required dependencies:
-    ```bash
-    npm install
-    ```
-4. Run the application:
-    ```bash
-    npm run start -- --privKey <privateKey> --destination <address> --amount <amount> [options]
-    ```
+
+### Disclaimer
+
+**1. No Responsibility:**
+I, the developer, am not responsible for any direct or indirect consequences, including but not limited to financial loss, damages, or legal repercussions that may arise from the use or misuse of this project. This software is provided "as is," without any guarantees or warranties of any kind.
+
+**2. No Recommendation or Endorsement:**
+This project is not an endorsement, recommendation, or promotion of any cryptocurrency, blockchain technology, or financial product. Any references to specific technologies or products are for informational purposes only and do not constitute an endorsement.
+
+**3. Not Financial Advice:**
+The content and tools provided in this project are not intended as financial advice. I am not a financial advisor, and you should consult with a qualified professional before making any financial decisions.
+
+**4. Use at Your Own Risk:**
+By using this project, you acknowledge that you do so at your own risk. The user is solely responsible for ensuring compliance with all applicable laws and regulations.
+
+**5. No Warranty or Liability:**
+This project is provided without warranty of any kind, express or implied. In no event shall I, the developer, be held liable for any damages arising from the use of this project.
+
+**6. Third-Party Content:**
+Any third-party content, including but not limited to libraries, APIs, or other code incorporated into this project, is the responsibility of their respective authors. I do not assume any responsibility for the content or functionality of third-party materials.
+
+**7. Legal Compliance:**
+Users are responsible for ensuring that their use of this project complies with all applicable local, national, and international laws and regulations.
+
