@@ -127,7 +127,7 @@ try {
           
     
           if (ourOutput !== -1) {
-            const signature = transaction.signInput(ourOutput, privateKey);
+            const signature = await transaction.createInputSignature(ourOutput, privateKey);
             transaction.fillInput(ourOutput, script.encodePayToScriptHashSignatureScript(signature));
           }
     
@@ -141,6 +141,7 @@ try {
               // Check if revealHash exists in any transaction in the updated UTXOs
               const revealAccepted = updatedUTXOs.entries.some(entry => {
                 const transactionId = entry.entry.outpoint ? entry.entry.outpoint.transactionId : undefined;
+                console.log(entry)
     
                 return transactionId === revealHash;
               });
