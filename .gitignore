@@ -1,4 +1,4 @@
 bun*
 node_modules
-.secret
-wasm
+.secrets
+wasm*
