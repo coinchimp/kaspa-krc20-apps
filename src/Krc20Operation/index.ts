@@ -8,7 +8,7 @@ export interface KRC20OperationData {
   to?: string;
   amt?: string;
   max?: string;
-  limit?: string;
+  lim?: string;
   dec?: "8";
   pre?: string;
 }
@@ -80,7 +80,7 @@ export class Krc20Operation {
         entries,
         outputs: [{
           address: P2SHAddress.toString(),
-          amount: kaspaToSompi(amount)! // Dynamically set amount
+          amount: kaspaToSompi(amount)! 
         }],
         changeAddress: this.address.toString(),
         priorityFee: kaspaToSompi(this.priorityFeeValue)!,
@@ -104,7 +104,7 @@ export class Krc20Operation {
               entries,
               outputs: [],
               changeAddress: this.address.toString(),
-              priorityFee: kaspaToSompi("0.1")!,
+              priorityFee: kaspaToSompi(amount)!,
               networkId: this.network
             });
 
@@ -159,47 +159,55 @@ export class Krc20Operation {
   private getAmountBasedOnOperation(): string {
     switch (this.data.op) {
       case 'deploy':
-        return "1000";
+        return "1003";
       case 'mint':
-        return "1";
+        return "2";
       case 'transfer':
-        return "0";
+        return "1";
       default:
-        return "1";  // Default to "1" if the operation is unknown
+        return "2";  // Default to "2" if the operation is unknown
     }
   }
 
   // Public method to handle minting operations
   public async mint(RPC: RpcClient, callback: () => void) {
-    this.log("DEBUG: Starting minting process", 'DEBUG');
-    await this.createTransaction(RPC, JSON.stringify({ "p": "krc-20", "op": "mint", "tick": this.ticker }), callback);
+    this.log("Starting mint process", 'DEBUG');
+    const mintData = {
+      p: "krc-20",
+      op: "mint",
+      tick: this.ticker,
+      to: this.data.to
+    };
+    this.log(`Mint data: ${JSON.stringify(mintData)}`, 'DEBUG');
+    await this.createTransaction(RPC, JSON.stringify(mintData), callback);
   }
 
   // Public method to handle deployment operations
   public async deploy(RPC: RpcClient, callback: () => void) {
-    this.log("DEBUG: Starting deploy process", 'DEBUG');
+    this.log("Starting deploy process", 'DEBUG');
     const deployData = {
       p: "krc-20",
       op: "deploy",
       tick: this.ticker,
-      max: this.data.max,
-      limit: this.data.limit,
-      pre: this.data.pre
+      max: this.data.max?.toString(),
+      lim: this.data.lim?.toString(),
+      pre: this.data.pre?.toString()
     };
-    this.log(`DEBUG: Deploy data: ${JSON.stringify(deployData)}`, 'DEBUG');
+    this.log(`Deploy data: ${JSON.stringify(deployData)}`, 'DEBUG');
     await this.createTransaction(RPC, JSON.stringify(deployData), callback);
   }
 
   // Public method to handle transfer operations
   public async transfer(RPC: RpcClient, callback: () => void) {
-    this.log("DEBUG: Starting transfer process", 'DEBUG');
+    this.log("Starting transfer process", 'DEBUG');
     const transferData = {
       p: "krc-20",
       op: "transfer",
       tick: this.ticker,
-      to: this.data.to
+      to: this.data.to,
+      amt: this.data.amt?.toString()
     };
-    this.log(`DEBUG: Transfer data: ${JSON.stringify(transferData)}`, 'DEBUG');
+    this.log(`Transfer data: ${JSON.stringify(transferData)}`, 'DEBUG');
     await this.createTransaction(RPC, JSON.stringify(transferData), callback);
   }
 }

@@ -15,7 +15,7 @@ const {
   operation = 'mint',
   destination,
   max,
-  limit,
+  lim,
   pre,
   help
 } = args;
@@ -35,7 +35,7 @@ Options:
   --logLevel <level>         Logging level: INFO, DEBUG (default: 'INFO')
   --destination <address>    Destination wallet address for transfer
   --max <max-supply>         Maximum supply for deploy
-  --limit <limit-per-mint>   Limit per mint for deploy
+  --lim <limit-per-mint>   Limit per mint for deploy
   --pre <preallocation>      Preallocation amount for deploy
   --help                     Show this help message and exit
   `);
@@ -71,9 +71,9 @@ if (operation === 'transfer' && !destination) {
   process.exit(1);
 }
 
-if (operation === 'deploy' && (!max || !limit)) {
+if (operation === 'deploy' && (!max || !lim)) {
   log("Error: Max supply and limit per mint are required for deploy operation. Use --max <max-supply> and --limit <limit-per-mint>.", 'ERROR');
-  console.log("Example: --max 1000000 --limit 1000");
+  console.log("Example: --max 1000000 --lim 1000");
   process.exit(1);
 }
 
@@ -84,7 +84,7 @@ const data: KRC20OperationData = {
   tick: ticker,
   to: destination,
   max: operation === 'deploy' ? max : undefined,
-  limit: operation === 'deploy' ? limit : undefined,
+  lim: operation === 'deploy' ? lim : undefined,
   pre: operation === 'deploy' ? pre : undefined,
 };
 
