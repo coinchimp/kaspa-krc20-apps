@@ -1,4 +1,4 @@
-import { RpcClient, ScriptBuilder, Opcodes, PrivateKey, addressFromScriptPublicKey, createTransactions, kaspaToSompi } from "../../wasm/kaspa"; 
+import { RpcClient, ScriptBuilder, Opcodes, PrivateKey, addressFromScriptPublicKey, createTransactions, kaspaToSompi } from "../../wasm/kaspa-dev"; 
 
 // Interface defining the structure of the KRC20 operation data
 export interface KRC20OperationData {
@@ -61,7 +61,13 @@ export class Krc20Operation {
         .addOp(Opcodes.OpEndIf);
 
       // Generate the P2SH address from the script
+      if (this.logLevel === 'DEBUG') {
+        this.log(`script: `, 'DEBUG');
+        console.log(script);
+      }
+
       const P2SHAddress = addressFromScriptPublicKey(script.createPayToScriptHashScript(), this.network)!;
+
 
       // Log the script and P2SH address if in DEBUG mode
       if (this.logLevel === 'DEBUG') {
@@ -80,10 +86,10 @@ export class Krc20Operation {
         entries,
         outputs: [{
           address: P2SHAddress.toString(),
-          amount: kaspaToSompi(amount)! 
+          amount: kaspaToSompi("0.1")! 
         }],
         changeAddress: this.address.toString(),
-        priorityFee: kaspaToSompi(this.priorityFeeValue)!,
+        priorityFee: kaspaToSompi(this.priorityFeeValue.toString())!,
         networkId: this.network
       });
 
@@ -98,7 +104,6 @@ export class Krc20Operation {
         setTimeout(async () => {
           try {
             const revealUTXOs = await RPC.getUtxosByAddresses({ addresses: [P2SHAddress.toString()] });
-
             const revealTransaction = await createTransactions({
               priorityEntries: [revealUTXOs.entries[0]],
               entries,

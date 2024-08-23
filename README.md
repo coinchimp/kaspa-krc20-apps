@@ -12,59 +12,10 @@ This project was created using `bun init` in bun v1.0.31. [Bun](https://bun.sh) 
 You can download the latest form here: https://kaspa.aspectron.org/nightly/downloads/
 move `nodejs` to the repo folder as `wasm`
 
-## KRC20 Operation CLI
-
-### Overview
-
-This application is a command-line interface (CLI) tool for performing operations on KRC20 tokens within the Kaspa blockchain network. It allows you to mint, deploy, and transfer KRC20 tokens securely and efficiently.
-
-### Usage
-
-```bash
-bun run src/operKrc20Cli.ts --privKey <priv-key> --operation <operation> [options]
+## Basic krc20 min app
+This app is showing the basics of the krc20 insert data mint operation
 ```
-
-### Options
-
-- `--privKey <priv-key>`: **Required**. Your private key used to sign transactions.
-- `--operation <operation>`: **Required**. The operation to perform: `mint`, `deploy`, or `transfer`.
-- `--network <network>`: The network to use (default: `testnet-10`).
-- `--ticker <ticker>`: The ticker symbol for the token (default: `TNACHO`).
-- `--priorityFee <fee>`: Priority fee in KAS for the transaction (default: `0.1`).
-- `--timeout <ms>`: Timeout for operations in milliseconds (default: `20000`).
-- `--logLevel <level>`: Logging level: `INFO` or `DEBUG` (default: `INFO`).
-- `--destination <address>`: **Required for transfer**. The destination wallet address for the transfer.
-- `--max <max-supply>`: **Required for deploy**. Maximum supply for the deployed token.
-- `--limit <limit-per-mint>`: **Required for deploy**. Limit per mint for the deployed token.
-- `--pre <preallocation>`: Preallocation amount for the deployed token.
-- `--help`: Show this help message and exit.
-
-### Examples
-
-#### Minting KRC20 Tokens
-
-```bash
-bun run src/operKrc20Cli.ts --privKey your_private_key_here --operation mint --ticker MYTOKEN
-```
-
-#### Deploying a New KRC20 Token
-
-```bash
-bun run src/operKrc20Cli.ts --privKey your_private_key_here --operation deploy --max 1000000 --limit 1000 --ticker MYTOKEN
-```
-
-#### Transferring KRC20 Tokens
-
-```bash
-bun run src/operKrc20Cli.ts --privKey your_private_key_here --operation transfer --destination your_wallet_address_here --ticker MYTOKEN
-```
-
-### Logging and Debugging
-
-Set the logging level using the `--logLevel` option:
-
-```bash
-bun run src/operKrc20Cli.ts --privKey your_private_key_here --operation mint --logLevel DEBUG
+bun run mint.ts --privKey <your-priv-key> 
 ```
 
 ## KeyGenerator CLI
@@ -77,7 +28,6 @@ bun run src/operKrc20Cli.ts --privKey your_private_key_here --operation mint --l
 - **Generate Private Key:** Derives a private key from a mnemonic phrase.
 - **Obtain Address:** Obtain a wallet address from a private key.
 - **Debug Mode:** Output detailed debug information for troubleshooting.
-
 
 ### Generate a New Mnemonic, Private Key, and Address
 
@@ -155,7 +105,60 @@ node kaspa-transfer --privKey yourPrivateKeyHere --destination kaspaAddressHere 
 
 This command will transfer 100 KASPA tokens from your wallet to the specified destination address on the `testnet-10` network, with detailed logging output at the `DEBUG` level.
 
+## KRC20 Operation CLI (work in progress)
 
+### Overview
+
+This application is a command-line interface (CLI) tool for performing operations on KRC20 tokens within the Kaspa blockchain network. It allows you to mint, deploy, and transfer KRC20 tokens securely and efficiently.
+
+### Usage
+
+```bash
+bun run src/operKrc20Cli.ts --privKey <priv-key> --operation <operation> [options]
+```
+
+### Options
+
+- `--privKey <priv-key>`: **Required**. Your private key used to sign transactions.
+- `--operation <operation>`: **Required**. The operation to perform: `mint`, `deploy`, or `transfer`.
+- `--network <network>`: The network to use (default: `testnet-10`).
+- `--ticker <ticker>`: The ticker symbol for the token (default: `TNACHO`).
+- `--priorityFee <fee>`: Priority fee in KAS for the transaction (default: `0.1`).
+- `--timeout <ms>`: Timeout for operations in milliseconds (default: `20000`).
+- `--logLevel <level>`: Logging level: `INFO` or `DEBUG` (default: `INFO`).
+- `--destination <address>`: **Required for transfer**. The destination wallet address for the transfer.
+- `--max <max-supply>`: **Required for deploy**. Maximum supply for the deployed token.
+- `--limit <limit-per-mint>`: **Required for deploy**. Limit per mint for the deployed token.
+- `--pre <preallocation>`: Preallocation amount for the deployed token.
+- `--help`: Show this help message and exit.
+
+### Examples
+
+#### Minting KRC20 Tokens
+
+```bash
+bun run src/operKrc20Cli.ts --privKey your_private_key_here --operation mint --ticker MYTOKEN
+```
+
+#### Deploying a New KRC20 Token
+
+```bash
+bun run src/operKrc20Cli.ts --privKey your_private_key_here --operation deploy --max 1000000 --limit 1000 --ticker MYTOKEN
+```
+
+#### Transferring KRC20 Tokens
+
+```bash
+bun run src/operKrc20Cli.ts --privKey your_private_key_here --operation transfer --destination your_wallet_address_here --ticker MYTOKEN
+```
+
+### Logging and Debugging
+
+Set the logging level using the `--logLevel` option:
+
+```bash
+bun run src/operKrc20Cli.ts --privKey your_private_key_here --operation mint --logLevel DEBUG
+```
 
 ### Disclaimer
 
