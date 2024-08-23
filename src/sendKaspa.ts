@@ -84,7 +84,7 @@ try {
   const transactionSender = new TransactionSender(network, privateKey, RPC);
   await new Promise(resolve => setTimeout(resolve, 1000));
   log("Main: Transfering Funds", 'DEBUG');
-  const transactionId = transactionSender.transferFunds(privateKey.toPublicKey().toAddress(network).toString(), amount);
+  const transactionId = transactionSender.transferFunds(destination, amount);
 
   console.log(`Final Transaction ID: `, transactionId);
 } catch (error) {

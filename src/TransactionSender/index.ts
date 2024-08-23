@@ -5,7 +5,6 @@ import { kaspaToSompi, type IPaymentOutput, createTransactions, PrivateKey, Utxo
 export default class TransactionSender extends EventEmitter {
   private networkId: string;
   private privateKey: PrivateKey;
-  private address: string;
   private processor: UtxoProcessor;
   private context: UtxoContext;
   private rpc: RpcClient;
@@ -16,7 +15,6 @@ export default class TransactionSender extends EventEmitter {
     super()
     this.networkId = networkId;
     this.privateKey = privKey;
-    this.address = this.privateKey.toAddress(networkId).toString();
     this.processor = new UtxoProcessor({ rpc, networkId });
     this.rpc = this.processor.rpc
     this.context = new UtxoContext({ processor: this.processor });
@@ -47,7 +45,7 @@ export default class TransactionSender extends EventEmitter {
     const { transactions, summary } = await createTransactions({
       entries: context,
       outputs,
-      changeAddress: this.address,
+      changeAddress: this.privateKey.toPublicKey().toAddress(this.networkId).toString(),
       priorityFee: 0n
     });
     console.log(`TrxManager: Transaction Length: ${transactions.length}`)
@@ -78,7 +76,7 @@ export default class TransactionSender extends EventEmitter {
       console.log(`TrxManager: registerProcessor - this.context.clear()`);
       await this.context.clear()
       console.log(`TrxManager: registerProcessor - tracking pool address`);
-      await this.context.trackAddresses([ this.address ])
+      await this.context.trackAddresses([ this.privateKey.toPublicKey().toAddress(this.networkId).toString() ])
     })
     this.processor.start()
   }  
