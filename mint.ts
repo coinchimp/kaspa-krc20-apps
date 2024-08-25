@@ -90,10 +90,10 @@ try {
     entries,
     outputs: [{
       address: P2SHAddress.toString(),
-      amount: kaspaToSompi("0.1")!
+      amount: kaspaToSompi("0.3")!  // don't go to low because to fhte mess storage restrictions.
     }],
     changeAddress: address.toString(),
-    priorityFee: kaspaToSompi("0.01")!,
+    priorityFee: kaspaToSompi(priorityFeeValue.toString())!,
     networkId: network
   });
 
@@ -114,7 +114,7 @@ try {
           entries,
           outputs: [],
           changeAddress: address.toString(),
-          priorityFee: kaspaToSompi("1")!,
+          priorityFee: kaspaToSompi("1")!,  // krc20 gas fee
           networkId: network
         });
 
