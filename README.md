@@ -34,7 +34,7 @@ bun run mint.ts --privKey <your-priv-key>
 To generate a new mnemonic, derive a private key from it, and then generate a corresponding address, use:
 
 ```bash
-bun keyGeneratorCli.ts generate
+bun run src/keyGeneratorCli.ts generate
 ```
 
 ### Obtain an Address from an Existing Private Key
@@ -42,7 +42,7 @@ bun keyGeneratorCli.ts generate
 If you already have a private key and want to obtain the related address:
 
 ```bash
-bun keyGeneratorCli.ts address <privateKey>
+bun run src/keyGeneratorCli.ts address <privateKey>
 ```
 
 Replace `<privateKey>` with your actual private key.
@@ -52,7 +52,7 @@ Replace `<privateKey>` with your actual private key.
 To see detailed debug output, add the `--debug` flag to any command:
 
 ```bash
-bun keyGeneratorCli.ts generate --debug
+bun run src/keyGeneratorCli.ts generate --debug
 ```
 
 ### Display Help
@@ -60,7 +60,7 @@ bun keyGeneratorCli.ts generate --debug
 For a list of available commands and options:
 
 ```bash
-bun keyGeneratorCli.ts --help
+bun run src/keyGeneratorCli.ts --help
 ```
 
 ## Example
@@ -68,7 +68,7 @@ bun keyGeneratorCli.ts --help
 Here's an example of generating a new mnemonic, private key, and address with debugging enabled:
 
 ```bash
-bun keyGeneratorCli.ts generate --debug
+bun run src/keyGeneratorCli.ts generate --debug
 ```
 
 ## Kaspa Transfer CLI
@@ -85,7 +85,7 @@ The **Kaspa Transfer CLI** is a command-line application written in TypeScript t
 ### Usage
 
 ```bash
-node kaspa-transfer --privKey <privateKey> --destination <address> --amount <amount> [options]
+bun run src/sendKaspa.ts --privKey <privateKey> --destination <address> --amount <amount> [options]
 ```
 
 ### Options
@@ -100,12 +100,13 @@ node kaspa-transfer --privKey <privateKey> --destination <address> --amount <amo
 ### Example
 
 ```bash
-node kaspa-transfer --privKey yourPrivateKeyHere --destination kaspaAddressHere --amount 100 --network testnet-10 --logLevel DEBUG
+bun run src/sendKaspa.ts --privKey yourPrivateKeyHere --destination kaspaAddressHere --amount 100 --network testnet-10 --logLevel DEBUG
 ```
 
 This command will transfer 100 KASPA tokens from your wallet to the specified destination address on the `testnet-10` network, with detailed logging output at the `DEBUG` level.
 
 ## KRC20 Operation CLI (work in progress)
+** These Classes are still in unfinished state **
 
 ### Overview
 
