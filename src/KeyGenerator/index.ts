@@ -41,7 +41,7 @@ class KeyGenerator {
     this.logDebug('Converting mnemonic to seed...');
     const seed = await bip39.mnemonicToSeed(mnemonic);
     const rootNode: BIP32Interface = bip32.fromSeed(seed);
-    const accountNode = rootNode.derivePath("m/44'/0'/0'/0/0");
+    const accountNode = rootNode.derivePath("m/44'/111'/0'/0/0");
 
     this.logDebug('Derived private key from mnemonic.');
     return accountNode.privateKey.toString('hex');
