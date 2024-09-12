@@ -152,7 +152,7 @@ try {
     log(`Main: Transaction signed with ID: ${transaction.id}`, 'DEBUG');
     const hash = await transaction.submit(RPC);
     log(`submitted P2SH commit sequence transaction on: ${hash}`, 'INFO');
-
+  }
 
 
     // Set a timeout to handle failure cases
@@ -169,7 +169,7 @@ try {
     }
 
     clearTimeout(commitTimeout);  // Clear the reveal timeout if the event is received
-    } 
+     
 } catch (initialError) {
       log(`Initial transaction error: ${initialError}`, 'ERROR');
 }
@@ -191,6 +191,7 @@ if (eventReceived) {
     priorityFee: kaspaToSompi("1")!,
     networkId: network
   });
+  let revealHash: any;
 
   for (const transaction of transactions) {
     transaction.sign([privateKey], false);
@@ -201,10 +202,9 @@ if (eventReceived) {
       const signature = await transaction.createInputSignature(ourOutput, privateKey);
       transaction.fillInput(ourOutput, script.encodePayToScriptHashSignatureScript(signature));
     }
-
-    const revealHash = await transaction.submit(RPC);
+    revealHash = await transaction.submit(RPC);
     log(`submitted reveal tx sequence transaction: ${revealHash}`, 'INFO');
-
+  }
     const revealTimeout = setTimeout(() => {
       if (!eventReceived) {
         log('Timeout: Reveal transaction did not mature within 2 minutes', 'ERROR');
@@ -240,9 +240,7 @@ if (eventReceived) {
     } catch (error) {
       log(`Error checking reveal transaction status: ${error}`, 'ERROR');
     }
-
-
-  }    
+      
 } else {
   log('Error: No UTXOs available for reveal', 'ERROR');
 }
