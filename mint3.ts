@@ -3,13 +3,16 @@ import minimist from 'minimist';
 
 // Parse command-line arguments
 const args = minimist(process.argv.slice(2));
-
 const privateKeyArg = args.privKey;
 const network = args.network || 'testnet-10';
 const ticker = args.ticker || 'TCHIMP';
 const priorityFeeValue = args.priorityFee || '1.5';
 const timeout = args.timeout || 120000; // 2 minutes timeout
 const logLevel = args.logLevel || 'INFO';
+
+let addedEventTrxId : any;
+let SubmittedtrxId: any;
+
 
 if (!privateKeyArg) {
   console.error("Please provide a private key using the --privKey flag.");
@@ -61,52 +64,37 @@ log(`Main: Determining wallet address`, 'DEBUG');
 const address = publicKey.toAddress(network);
 log(`Address: ${address.toString()}`, 'INFO');
 
-// Initialize the UTXO processor and listen for the maturity event
+// New UTXO subscription setup (ADD this):
+log(`Subscribing to UTXO changes for address: ${address.toString()}`, 'DEBUG');
+await RPC.subscribeUtxosChanged([address.toString()]);
 
-log(`Initializing UTXO processor for network: ${network}`, 'DEBUG');
-const processor = new UtxoProcessor({ rpc: RPC, networkId: network });
-const context = new UtxoContext({ processor });
 
-// Ensure listeners are set before starting the processor
-processor.addEventListener('utxo-proc-start', async () => {
-    log(`utxo-proc-start: UTXO processor has started, now tracking address: ${address.toString()}`, 'DEBUG');
-    try {
-        const result = await context.trackAddresses([address.toString()]);  // Track the original address
-        log(`Successfully started tracking address: ${address.toString()} with result: ${JSON.stringify(result)}`, 'DEBUG');
-    } catch (error) {
-        log(`Error while trying to track address: ${address.toString()}, Error: ${error}`, 'ERROR');
-    }
-});
-
-// Listen for maturity events
-processor.addEventListener('maturity', (event: any) => {
-    log(`Maturity event detected: ${JSON.stringify(event, (key, value) => typeof value === 'bigint' ? value.toString() + 'n' : value)}`, 'DEBUG');
+RPC.addEventListener('utxos-changed', async (event: any) => {
+    log(`UTXO changes detected for address: ${address.toString()}`, 'DEBUG');
     
-    if (event.type === 'maturity' && event.data.type === 'incoming') {
-        log(`Incoming maturity event for address: ${address.toString()}`, 'DEBUG');
-        
-        const utxoEntry = event.data.data.utxoEntries.find((entry: any) => entry.address === address.toString());  // Check for original address
-        if (utxoEntry) {
-            log(`Commit UTXO found for address: ${address.toString()} with UTXO: ${JSON.stringify(utxoEntry)}`, 'DEBUG');
+    // Check for UTXOs removed for the specific address
+    const removedEntry = event.data.removed.find((entry: any) => 
+        entry.address.payload === address.toString().split(':')[1]
+    );
+    const addedEntry = event.data.added.find((entry: any) => 
+        entry.address.payload === address.toString().split(':')[1]
+    );    
+
+    if (removedEntry) {
+        // Use custom replacer function in JSON.stringify to handle BigInt
+        log(`Added UTXO found for address: ${address.toString()} with UTXO: ${JSON.stringify(addedEntry, (key, value) =>
+            typeof value === 'bigint' ? value.toString() + 'n' : value)}`, 'DEBUG');        
+        log(`Removed UTXO found for address: ${address.toString()} with UTXO: ${JSON.stringify(removedEntry, (key, value) =>
+            typeof value === 'bigint' ? value.toString() + 'n' : value)}`, 'DEBUG');
+            addedEventTrxId = addedEntry.outpoint.transactionId;
+        log(`Added UTXO TransactionId: ${addedEventTrxId}`,'DEBUG');
+        if (addedEventTrxId == SubmittedtrxId){
             eventReceived = true;
-        } else {
-            log(`No UTXO found for address: ${address.toString()} in this maturity event`, 'DEBUG');
         }
+    } else {
+        log(`No removed UTXO found for address: ${address.toString()} in this UTXO change event`, 'DEBUG');
     }
 });
-
-// Now start the UTXO processor
-log('Starting UTXO processor...', 'DEBUG');
-await processor.start();
-log('UTXO processor started successfully', 'DEBUG');
-
-// Ensure the processor is actively processing UTXOs
-if (!processor.isActive) {
-    log('UTXO processor is not processing as expected. Please check the setup.', 'ERROR');
-} else {
-    log('UTXO processor is actively processing.', 'DEBUG');
-}
-
 
 
 
@@ -152,6 +140,7 @@ try {
     log(`Main: Transaction signed with ID: ${transaction.id}`, 'DEBUG');
     const hash = await transaction.submit(RPC);
     log(`submitted P2SH commit sequence transaction on: ${hash}`, 'INFO');
+    SubmittedtrxId = hash;
   }
 
 
@@ -204,6 +193,7 @@ if (eventReceived) {
     }
     revealHash = await transaction.submit(RPC);
     log(`submitted reveal tx sequence transaction: ${revealHash}`, 'INFO');
+    SubmittedtrxId = revealHash;
   }
     const revealTimeout = setTimeout(() => {
       if (!eventReceived) {
