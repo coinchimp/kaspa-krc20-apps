@@ -53,6 +53,7 @@ if (logLevel === 'DEBUG') {
   printResolverUrls(RPC);
 }
 
+
 log(`Main: Submitting private key`, 'DEBUG')
 const privateKey = new PrivateKey(privateKeyArg)
 log(`Main: Determining public key`, 'DEBUG')
@@ -84,6 +85,7 @@ if (logLevel === 'DEBUG') {
 }
 
 try {
+
   const { entries } = await RPC.getUtxosByAddresses({ addresses: [address.toString()] });
   const { transactions } = await createTransactions({
     priorityEntries: [],
@@ -97,6 +99,8 @@ try {
     networkId: network
   });
 
+
+
   for (const transaction of transactions) {
     transaction.sign([privateKey]);
     log(`Main: Transaction signed with ID: ${transaction.id}`, 'DEBUG');
@@ -105,6 +109,7 @@ try {
 
     setTimeout(async () => {
       try {
+        
         const { entries } = await RPC.getUtxosByAddresses({ addresses: [address.toString()] });
         const revealUTXOs = await RPC.getUtxosByAddresses({ addresses: [P2SHAddress.toString()] });
 

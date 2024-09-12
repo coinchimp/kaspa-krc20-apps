@@ -2,3 +2,7 @@ bun*
 node_modules
 .secrets
 wasm*
+kaspa*
+*.zip
+*.tar
+*.gz
