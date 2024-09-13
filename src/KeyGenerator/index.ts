@@ -22,8 +22,10 @@ class KeyGenerator {
     const mnemonic = Mnemonic.random();
     this.logDebug(`Generated mnemonic: ${mnemonic.phrase}`);
 
+
     const seed = mnemonic.toSeed();
     const xprv = new XPrv(seed);
+
 
    //const accountRoot = xprv.derivePath("m/44'/111111'/0'/0").toXPub();
     //const receiveXPub = accountRoot.deriveChild(0);
