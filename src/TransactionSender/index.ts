@@ -46,7 +46,7 @@ export default class TransactionSender extends EventEmitter {
       entries: context,
       outputs,
       changeAddress: this.privateKey.toPublicKey().toAddress(this.networkId).toString(),
-      priorityFee: 0n
+      priorityFee: kaspaToSompi("0.02")
     });
     console.log(`TrxManager: Transaction Length: ${transactions.length}`)
     // Handle the first transaction immediately

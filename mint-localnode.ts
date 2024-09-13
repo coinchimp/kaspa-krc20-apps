@@ -22,8 +22,9 @@ if (!privateKeyArg) {
 
 log("Main: starting rpc connection", 'DEBUG');
 const RPC = new RpcClient({
-  resolver: new Resolver(),
-  encoding: Encoding.Borsh,
+  url: 'ws://127.0.0.1:17210',
+  //resolver: new Resolver(),
+  //encoding: Encoding.Borsh,
   networkId: network
 });
 

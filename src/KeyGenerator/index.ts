@@ -1,11 +1,4 @@
-import * as bip39 from 'bip39';
-import { randomBytes } from 'crypto';
-import { BIP32Factory, BIP32Interface } from 'bip32';
-import * as ecc from 'tiny-secp256k1'; // Secp256k1 library for elliptic curve operations
-import { PrivateKey } from '../../wasm/kaspa';
-
-// Initialize BIP32 with the secp256k1 library
-const bip32 = BIP32Factory(ecc);
+const { Mnemonic, XPrv, PublicKeyGenerator } = require('../../wasm/kaspa');
 
 class KeyGenerator {
   private network: string;
@@ -22,49 +15,63 @@ class KeyGenerator {
     }
   }
 
-  // Generate a 24-word mnemonic phrase
-  public async generateMnemonic(): Promise<string> {
-    this.logDebug('Generating entropy for mnemonic...');
-    const entropy = randomBytes(32);
-    const mnemonic = bip39.entropyToMnemonic(entropy.toString('hex'));
-    this.logDebug(`Generated mnemonic: ${mnemonic}`);
-    return mnemonic;
-  }
-
-  // Generate a private key from a mnemonic
-  public async generatePrivateKey(mnemonic: string): Promise<string> {
-    this.logDebug(`Validating mnemonic: ${mnemonic}`);
-    if (!bip39.validateMnemonic(mnemonic)) {
-      throw new Error('Invalid mnemonic phrase');
-    }
-
-    this.logDebug('Converting mnemonic to seed...');
-    const seed = await bip39.mnemonicToSeed(mnemonic);
-    const rootNode: BIP32Interface = bip32.fromSeed(seed);
-    const accountNode = rootNode.derivePath("m/44'/111'/0'/0/0");
-
-    this.logDebug('Derived private key from mnemonic.');
-    return accountNode.privateKey.toString('hex');
-  }
-
-  // Generate a wallet address from a private key
-  public generateAddress(privateKey: string): string {
-    this.logDebug('Converting private key to Kaspa public key...');
-    const kaspaPrivateKey = new PrivateKey(privateKey);
-    const publicKey = kaspaPrivateKey.toPublicKey();
-    const address = publicKey.toAddress(this.network);
-    this.logDebug(`Generated address: ${address}`);
-    return address.toString();
-  }
-
-  // Generate the mnemonic, private key, and address all at once
-  public async generateKeys(): Promise<{ mnemonic: string; privateKey: string; address: string }> {
+  // Consolidated method to generate mnemonic, private key, and addresses
+  public async generateKeys(): Promise<{ mnemonic: string; receivePrivateKey: string; changePrivateKey: string; receive: string; change: string }> {
     this.logDebug('Starting key generation process...');
-    const mnemonic = await this.generateMnemonic();
-    const privateKey = await this.generatePrivateKey(mnemonic);
-    const address = this.generateAddress(privateKey);
-    this.logDebug('Key generation process complete.');
-    return { mnemonic, privateKey, address };
+
+    const mnemonic = Mnemonic.random();
+    this.logDebug(`Generated mnemonic: ${mnemonic.phrase}`);
+
+
+    const seed = mnemonic.toSeed();
+    const xprv = new XPrv(seed);
+
+
+   //const accountRoot = xprv.derivePath("m/44'/111111'/0'/0").toXPub();
+    //const receiveXPub = accountRoot.deriveChild(0);
+    //const changeXPub = accountRoot.deriveChild(1);
+
+    const receivePrivateKey = xprv.derivePath("m/44'/111111'/0'/0/0").toPrivateKey(); // Derive the private key for the receive address
+    const changePrivateKey = xprv.derivePath("m/44'/111111'/0'/1/0").toPrivateKey(); // Derive the private key for the change address
+    
+    // Derive the corresponding public keys from the private keys
+    const receivePublicKey = receivePrivateKey.toPublicKey();
+    const changePublicKey = changePrivateKey.toPublicKey();
+    
+    // Generate the addresses from the public keys
+    const receiveAddress = receivePublicKey.toAddress(this.network).toString();
+    const changeAddress = changePublicKey.toAddress(this.network).toString();
+    
+    // Convert private keys to strings for output
+    const receivePrivateKeyString = receivePrivateKey.toString();
+    const changePrivateKeyString = changePrivateKey.toString();
+    
+
+    this.logDebug(`Generated receive address: ${receiveAddress}`);
+    this.logDebug(`Generated change address: ${changeAddress}`);
+
+    return {
+      mnemonic: mnemonic.phrase,
+      receivePrivateKey: receivePrivateKeyString,
+      changePrivateKey: changePrivateKeyString,
+      receive: receiveAddress,
+      change: changeAddress,
+    };
+  }
+
+  // New method to generate an address from a private key (XPrv)
+  public generateAddressFromXPrv(xprv: string): string {
+    this.logDebug('Generating address from private key (XPrv)...');
+
+    const privateKey = XPrv.fromString(xprv);  // Convert string to XPrv
+    const keygen = PublicKeyGenerator.fromMasterXPrv(privateKey.toString(), false, 0n, 0);
+
+    // Derive the first receive public key and convert to address
+    const publicKey = keygen.receivePubkeys(0, 1)[0]; // Get first receive public key
+    const address = publicKey.toAddress(this.network).toString(); // Convert to address
+
+    this.logDebug(`Generated address: ${address}`);
+    return address;
   }
 }
 

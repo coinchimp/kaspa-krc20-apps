@@ -1,4 +1,10 @@
 bun*
 node_modules
-.secrets
+.secrets*
 wasm*
+kaspa*
+*.zip
+*.tar
+*.gz
+docker*
+address*
