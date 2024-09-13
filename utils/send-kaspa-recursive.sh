@@ -15,7 +15,7 @@ send_kaspa_for_each_address() {
 
             # Run the sendKaspa.ts script using bun
             echo "Sending $amount Kaspa to $destination..."
-            bun run src/sendKaspa.ts --privKey "$priv_key" --destination "$destination" --amount "$amount" --network testnet-10
+            bun run ../src/sendKaspa.ts --privKey "$priv_key" --destination "$destination" --amount "$amount" --network testnet-10
             sleep 30
         fi
     done < "$key_file"

@@ -1,4 +1,4 @@
-import { RpcClient, Resolver, PrivateKey, UtxoProcessor, UtxoContext, Encoding } from './wasm/kaspa';
+import { RpcClient, Resolver, PrivateKey, UtxoProcessor, UtxoContext, Encoding } from '../wasm/kaspa';
 import minimist from 'minimist';
 
 const args = minimist(process.argv.slice(2));

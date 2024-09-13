@@ -1,4 +1,4 @@
-import { RpcClient, Resolver, Encoding } from './wasm/kaspa';
+import { RpcClient, Resolver, Encoding } from '../wasm/kaspa';
 import minimist from 'minimist';
 
 // Parse command-line arguments
