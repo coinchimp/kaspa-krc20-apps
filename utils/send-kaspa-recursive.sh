@@ -8,8 +8,9 @@ send_kaspa_for_each_address() {
 
     while read -r line; do
         # Look for destination addresses in the file
-        if [[ $line == Address:* ]]; then
-            destination=$(echo "$line" | awk '{print $2}')
+        if [[ $line == Receive\ Address:* ]]; then
+            # Extract everything after "Receive Address: " using a regex
+            destination=$(echo "$line" | sed 's/Receive Address: //')
             echo "Found destination: $destination"
 
             # Run the sendKaspa.ts script using bun

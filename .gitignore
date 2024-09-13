@@ -7,3 +7,4 @@ kaspa*
 *.tar
 *.gz
 docker*
+address*
