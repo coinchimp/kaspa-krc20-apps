@@ -41,10 +41,11 @@ class KeyGenerator {
     this.logDebug('Converting mnemonic to seed...');
     const seed = await bip39.mnemonicToSeed(mnemonic);
     const rootNode: BIP32Interface = bip32.fromSeed(seed);
-    const accountNode = rootNode.derivePath("m/44'/0'/0'/0/0");
+    const accountNode = rootNode.derivePath("m/44'/111'/0'/0/0");
+    const accountNodeChange = rootNode.derivePath("m/44'/111'/0'/1/0");
 
     this.logDebug('Derived private key from mnemonic.');
-    return accountNode.privateKey.toString('hex');
+    return [ accountNode.privateKey.toString('hex'),  accountNodeChange.privateKey.toString('hex')];
   }
 
   // Generate a wallet address from a private key
@@ -58,13 +59,14 @@ class KeyGenerator {
   }
 
   // Generate the mnemonic, private key, and address all at once
-  public async generateKeys(): Promise<{ mnemonic: string; privateKey: string; address: string }> {
+  public async generateKeys(): Promise<{ mnemonic: string; privateKey: string; address: string; changeKey: string; changeAddress: string }> {
     this.logDebug('Starting key generation process...');
     const mnemonic = await this.generateMnemonic();
-    const privateKey = await this.generatePrivateKey(mnemonic);
+    const [ privateKey, changeKey] = await this.generatePrivateKey(mnemonic);
     const address = this.generateAddress(privateKey);
+    const changeAddress = this.generateAddress(changeKey);
     this.logDebug('Key generation process complete.');
-    return { mnemonic, privateKey, address };
+    return { mnemonic, privateKey, address, changeKey, changeAddress  };
   }
 }
 

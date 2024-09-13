@@ -20,6 +20,8 @@ program
       console.log('Mnemonic:', keys.mnemonic);
       console.log('Private Key:', keys.privateKey);
       console.log('Address:', keys.address);
+      console.log('Change Key:', keys.changeKey);
+      console.log('Change Address:', keys.changeAddress);
     } catch (error) {
       console.error('ERROR:', error.message);
     }

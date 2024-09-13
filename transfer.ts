@@ -9,13 +9,15 @@ const ticker = args.ticker || 'TCHIMP';
 const priorityFeeValue = args.priorityFee || '1.5';
 const timeout = args.timeout || 120000; // 2 minutes timeout
 const logLevel = args.logLevel || 'INFO';
+const dest = args.dest;
+const amount = args.amount || '1';
 
 let addedEventTrxId : any;
 let SubmittedtrxId: any;
 
 
-if (!privateKeyArg) {
-  console.error("Please provide a private key using the --privKey flag.");
+if (!privateKeyArg || !dest) {
+  console.error("Please provide a private key using the --privKey flag and the destination with --dest.");
   process.exit(1);
 }
 
@@ -99,8 +101,8 @@ RPC.addEventListener('utxos-changed', async (event: any) => {
 
 
 
-const gasFee = 1
-const data = { "p": "krc-20", "op": "mint", "tick": ticker };
+const gasFee = 0.3
+const data = { "p": "krc-20", "op": "transfer", "tick": ticker, "amt": amount, "to": dest  };
 log(`Main: Data to use for ScriptBuilder: ${JSON.stringify(data)}`, 'DEBUG');
 
 const script = new ScriptBuilder()
