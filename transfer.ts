@@ -102,7 +102,7 @@ RPC.addEventListener('utxos-changed', async (event: any) => {
 
 
 const gasFee = 0.3
-const data = { "p": "krc-20", "op": "transfer", "tick": ticker, "amt": amount, "to": dest  };
+const data = { "p": "krc-20", "op": "transfer", "tick": ticker, "amt": amount.toString(), "to": dest  };
 
 log(`Main: Data to use for ScriptBuilder: ${JSON.stringify(data)}`, 'DEBUG');
 
