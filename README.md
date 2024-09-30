@@ -12,10 +12,20 @@ This project was created using `bun init` in bun v1.0.31. [Bun](https://bun.sh) 
 You can download the latest form here: https://kaspa.aspectron.org/nightly/downloads/
 move `nodejs` to the repo folder as `wasm`
 
-## Basic krc20 min app
+## Basic krc20 mint, deploy and transfer app
 This app is showing the basics of the krc20 insert data mint operation
 ```
 bun run mint.ts --privKey <your-priv-key> 
+```
+
+This app is showing the basics of the krc20 insert data deploy operation
+```
+bun run deploy.ts --privKey <your-priv-key> 
+```
+
+This app is showing the basics of the krc20 insert data transfer operation
+```
+bun run transfer.ts --privKey <your-priv-key> 
 ```
 
 ## KeyGenerator CLI
