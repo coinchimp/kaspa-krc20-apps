@@ -133,7 +133,7 @@ for (let i = 0; i < loops; i++) {
         entries,
         outputs: [{
           address: P2SHAddress.toString(),
-          amount: kaspaToSompi("0.3")!
+          amount: kaspaToSompi("0.2")!
         }],
         changeAddress: address.toString(),
         priorityFee: kaspaToSompi(priorityFeeValue.toString())!,
