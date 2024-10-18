@@ -12,6 +12,18 @@ async function fetchTokenData(address: string) {
     }
 }
 
+// Function to fetch marketplace floor prices
+async function fetchMarketplaceData() {
+    try {
+        const response = await axios.get('https://storage.googleapis.com/kspr-api-v1/marketplace/marketplace.json');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching marketplace data:', error);
+        throw error;
+    }
+}
+
+
 // Function to read the addresses from a file
 function readAddresses(filePath: string): string[] {
     const data = fs.readFileSync(filePath, 'utf8');
@@ -41,6 +53,10 @@ function updateTotals(totals: Map<string, number>, tick: string, amount: number)
 async function displayTokenDataForAddresses(addresses: string[]) {
     const rows: string[][] = [];
     const totals = new Map<string, number>(); // To track total amounts for each TICK
+    const kasTotals = new Map<string, number>(); // To track KAS equivalents for each TICK
+
+    // Fetch marketplace data
+    const marketplaceData = await fetchMarketplaceData();
 
     for (const address of addresses) {
         try {
@@ -53,6 +69,11 @@ async function displayTokenDataForAddresses(addresses: string[]) {
                 const formattedBalance = formatNumber(balance, Number(token.dec));
                 rowData.push(`${token.tick}: ${formattedBalance}`);
                 updateTotals(totals, token.tick, balance);
+
+                // Convert to Kaspa equivalent using floor price
+                const floorPrice = marketplaceData[token.tick]?.floor_price || 0;
+                const kasEquivalent = balance * floorPrice;
+                updateTotals(kasTotals, token.tick, kasEquivalent);
             });
 
             rows.push(rowData);
@@ -70,12 +91,19 @@ async function displayTokenDataForAddresses(addresses: string[]) {
         console.log(row[0].padEnd(50) + row.slice(1).join(" | "));
     });
 
-    // Print totals at the bottom
+    // Print totals at the bottom with Kas equivalent
     console.log("\nTotals:");
+    let totalKas = 0; // Total KAS accumulator
     totals.forEach((total, tick) => {
-        console.log(`${tick}: ${formatNumber(total, 8)}`);
+        const kasEquivalent = (kasTotals.get(tick) || 0) / 1000000; // Divide kasTotals by 1,000,000
+        totalKas += kasEquivalent; // Add to total Kaspa
+        console.log(`${tick}: ${formatNumber(total, 8)} / ${formatNumber(kasEquivalent, 2)} KAS`);
     });
+
+    // Print total KAS
+    console.log(`\nTOTAL KAS: ${formatNumber(totalKas, 2)} KAS`);
 }
+
 
 // Main function to execute the app
 async function main() {
