@@ -46,9 +46,10 @@ async function displayKaspaBalancesForAddresses(addresses: string[]) {
     // Print the table
     console.log("Address".padEnd(50) + "Balance (KAS)");
     console.log("-".repeat(80));
-
+    let index: number = 0
     rows.forEach(row => {
-        console.log(row[0].padEnd(50) + row[1]);
+        index++
+        console.log(index + " " + row[0].padEnd(50) + " " + row[1]);
     });
 
     // Print total KAS

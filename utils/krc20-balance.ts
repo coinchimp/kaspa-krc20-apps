@@ -49,7 +49,6 @@ function updateTotals(totals: Map<string, number>, tick: string, amount: number)
     }
 }
 
-// Function to fetch token balances and display them in a simple table format
 async function displayTokenDataForAddresses(addresses: string[]) {
     const rows: string[][] = [];
     const totals = new Map<string, number>(); // To track total amounts for each TICK
@@ -57,6 +56,9 @@ async function displayTokenDataForAddresses(addresses: string[]) {
 
     // Fetch marketplace data
     const marketplaceData = await fetchMarketplaceData();
+
+    // Fetch Kaspa price
+    const kaspaPrice = await fetchKaspaPrice();
 
     for (const address of addresses) {
         try {
@@ -84,25 +86,41 @@ async function displayTokenDataForAddresses(addresses: string[]) {
     }
 
     // Print the table
-    console.log("Address".padEnd(50) + "Tokens");
-    console.log("-".repeat(80));
-
+    console.log("Address".padEnd(72) + "Tokens");
+    console.log("-".repeat(100));
+    let index: number = 0;
     rows.forEach(row => {
-        console.log(row[0].padEnd(50) + row.slice(1).join(" | "));
+        index++
+        console.log(index + " " + row[0].padEnd(50) + " " + row.slice(1).join(" | "));
     });
 
     // Print totals at the bottom with Kas equivalent
     console.log("\nTotals:");
     let totalKas = 0; // Total KAS accumulator
+    let totalUsd = 0; // Total USD accumulator
     totals.forEach((total, tick) => {
         const kasEquivalent = (kasTotals.get(tick) || 0) / 1000000; // Divide kasTotals by 1,000,000
+        const usdEquivalent = kasEquivalent * kaspaPrice; // Convert KAS to USD
         totalKas += kasEquivalent; // Add to total Kaspa
-        console.log(`${tick}: ${formatNumber(total, 8)} / ${formatNumber(kasEquivalent, 2)} KAS`);
+        totalUsd += usdEquivalent; // Add to total USD
+        console.log(`${tick}: ${formatNumber(total, 8)} / ${formatNumber(kasEquivalent, 2)} KAS / $${formatNumber(usdEquivalent, 2)} USD`);
     });
 
-    // Print total KAS
-    console.log(`\nTOTAL KAS: ${formatNumber(totalKas, 2)} KAS`);
+    // Print total KAS and total USD
+    console.log(`\nTOTAL KAS: ${formatNumber(totalKas, 2)} KAS / $${formatNumber(totalUsd, 2)} USD`);
 }
+
+// Function to fetch Kaspa price in USD
+async function fetchKaspaPrice() {
+    try {
+        const response = await axios.get('https://api.kaspa.org/info/price');
+        return response.data.price;
+    } catch (error) {
+        console.error('Error fetching Kaspa price:', error);
+        throw error;
+    }
+}
+
 
 
 // Main function to execute the app
