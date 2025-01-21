@@ -9,8 +9,9 @@ const ticker = args.ticker || 'TCHIMP';
 const priorityFeeValue = args.priorityFee || '1.5';
 const timeout = args.timeout || 120000; // 2 minutes timeout
 const logLevel = args.logLevel || 'INFO';
-const max = args.max || '28700000000000000000';
-const lim = args.max || '2870000000000';
+const max = args.max || '1000000000000';
+const lim = args.lim || '100000000000';
+const pre = args.pre || '10000000000';
 
 let addedEventTrxId : any;
 let SubmittedtrxId: any;
@@ -102,7 +103,7 @@ RPC.addEventListener('utxos-changed', async (event: any) => {
 
 
 const gasFee = 1000
-const data = {"p":"krc-20","op":"deploy","tick": ticker ,"max": max ,"lim": lim}
+const data = {"p":"krc-20","op":"deploy","tick": ticker ,"max": max ,"lim": lim, "pre": pre}
 log(`Main: Data to use for ScriptBuilder: ${JSON.stringify(data)}`, 'DEBUG');
 
 const script = new ScriptBuilder()
@@ -130,7 +131,7 @@ try {
     entries,
     outputs: [{
       address: P2SHAddress.toString(),
-      amount: kaspaToSompi("0.3")!
+      amount: kaspaToSompi("2.3")!
     }],
     changeAddress: address.toString(),
     priorityFee: kaspaToSompi(priorityFeeValue.toString())!,
